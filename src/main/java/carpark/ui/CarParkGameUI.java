@@ -455,6 +455,7 @@ public class CarParkGameUI extends Application {
         drawMapLaneBoundaries();  // white vertical lines at lane edges
         drawMapSlotLines();       // horizontal dividers between parking bays
         drawHandicapSlotSign();   // reserved handicap marker on slot 1
+        drawEVSlotBackground();   // EV charging bay on slot 2
         drawMapLaneMarkings();    // dashed center line
         drawMapGates();           // IN (top) and OUT (bottom) barrier gates
         drawEntryParkingSign();   // pole-mounted P sign before the IN gate
@@ -734,68 +735,113 @@ public class CarParkGameUI extends Application {
         mapPane.getChildren().add(handicap);
     }
 
-    /** Paints slot 2 as an EV charging bay with white lane markings/text. */
+    /** Paints slot 2 as an EV charging bay — badge-style EV marker on the left side. */
     private void drawEVSlotBackground() {
         int leftCount = leftSideSlotCount();
         if (leftCount <= 1) return;
 
-        double slotY = slotRowCenterY(1, leftCount);  // Slot 2 is index 1 (0-based)
+        double slotY    = slotRowCenterY(1, leftCount);
         double slotCellH = (MAP_SLOT_BOTTOM - MAP_SLOT_TOP) / leftCount;
-        double slotW = MAP_LANE_LEFT_X - MAP_PARK_LEFT_X;
-        double slotTopY = slotY - slotCellH / 2.0;
+        double slotW    = MAP_LANE_LEFT_X - MAP_PARK_LEFT_X;
+        double slotTopY  = slotY - slotCellH / 2.0;
         double slotLeftX = MAP_PARK_LEFT_X;
+        double cx        = slotLeftX + slotW / 2.0;
+        double cy        = slotTopY  + slotCellH / 2.0;
 
+        // --- green base ---
         Rectangle evBase = new Rectangle(slotLeftX, slotTopY, slotW, slotCellH);
-        evBase.setFill(Color.web("#64d147", 0.78));
+        evBase.setFill(Color.web("#3ab424", 0.35));
         mapPane.getChildren().add(evBase);
 
-        Rectangle topBar = new Rectangle(slotLeftX + 22, slotTopY + 7, slotW - 44, 5);
-        topBar.setFill(Color.web("#2a2f34", 0.95));
-        topBar.setArcWidth(3);
-        topBar.setArcHeight(3);
-        mapPane.getChildren().add(topBar);
+        // --- EV badge placed using the same layout as the handicap sign ---
+        double badgeW = 52;
+        double badgeH = Math.min(40, slotCellH * 0.65);
+        double badgeX = MAP_LEFT_SLOT_X - badgeW / 2.0;
+        double badgeY = slotY - badgeH / 2.0;
 
-        Text evText = new Text("EV");
-        evText.setFont(Font.font("Segoe UI", FontWeight.BOLD, Math.max(18, Math.min(34, slotCellH * 0.34))));
-        evText.setFill(Color.web("#ffffff", 0.90));
-        evText.setX(slotLeftX + slotW * 0.5 - 18);
-        evText.setY(slotTopY + slotCellH * 0.52);
+        Rectangle badge = new Rectangle(badgeX, badgeY, badgeW, badgeH);
+        badge.setFill(Color.web("#6b7280", 0.82));
+        badge.setStroke(Color.web("#ffffff", 0.75));
+        badge.setStrokeWidth(2.0);
+        badge.setArcWidth(8);
+        badge.setArcHeight(8);
+        badge.setOpacity(0.55);
+        mapPane.getChildren().add(badge);
+
+        Label evText = new Label("EV");
+        evText.setFont(Font.font("Segoe UI", FontWeight.BOLD, Math.max(16, Math.min(28, badgeH * 0.58))));
+        evText.setTextFill(Color.web("#f8fafc", 0.96));
+        evText.setAlignment(Pos.CENTER);
+        evText.setPrefSize(badgeW, badgeH);
+        evText.setLayoutX(badgeX);
+        evText.setLayoutY(badgeY - 2);
         mapPane.getChildren().add(evText);
 
-        Text charging = new Text("CHARGING");
-        charging.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, Math.max(7, Math.min(11, slotCellH * 0.12))));
-        charging.setFill(Color.web("#ffffff", 0.78));
-        charging.setX(slotLeftX + slotW * 0.5 - 28);
-        charging.setY(slotTopY + slotCellH * 0.60);
-        mapPane.getChildren().add(charging);
+        // --- EV CHARGER STATION at the back wall of the slot ---
+        drawEVChargerUnit(slotLeftX + slotW * 0.04, cy);
+    }
 
-        double ringR = Math.max(10, Math.min(18, slotCellH * 0.17));
-        double ringCx = slotLeftX + slotW * 0.5;
-        double ringCy = slotTopY + slotCellH * 0.72;
-        Circle ring = new Circle(ringCx, ringCy, ringR);
-        ring.setFill(Color.TRANSPARENT);
-        ring.setStroke(Color.web("#ffffff", 0.72));
-        ring.setStrokeWidth(3);
-        mapPane.getChildren().add(ring);
+    /** Draws a wall-mounted EV charger box with cable at position (x, cy). */
+    private void drawEVChargerUnit(double x, double cy) {
+        double bw = 14;   // charger box width
+        double bh = 20;   // charger box height
+        double bx = x;
+        double by = cy - bh / 2.0;
 
-        Polygon bolt = new Polygon(
-                ringCx - 4, ringCy - 6,
-                ringCx + 1, ringCy - 6,
-                ringCx - 2, ringCy,
-                ringCx + 4, ringCy,
-                ringCx - 1, ringCy + 8,
-                ringCx + 1, ringCy + 2,
-                ringCx - 4, ringCy + 2
+        // Charger body (dark box)
+        Rectangle body = new Rectangle(bx, by, bw, bh);
+        body.setFill(Color.web("#1a1a2e"));
+        body.setStroke(Color.web("#333355"));
+        body.setStrokeWidth(1);
+        body.setArcWidth(3);
+        body.setArcHeight(3);
+        mapPane.getChildren().add(body);
+
+        // Yellow/green face plate
+        Rectangle face = new Rectangle(bx + 2, by + 2, bw - 4, bh - 4);
+        face.setFill(Color.web("#f5c518"));
+        face.setArcWidth(2);
+        face.setArcHeight(2);
+        mapPane.getChildren().add(face);
+
+        // Lightning bolt on face
+        double fcx = bx + bw / 2.0;
+        double fcy = by + bh / 2.0;
+        Polygon chargerBolt = new Polygon(
+                fcx - 2.5, fcy - 6,
+                fcx + 1.0, fcy - 6,
+                fcx - 1.5, fcy,
+                fcx + 3.0, fcy,
+                fcx - 1.0, fcy + 6,
+                fcx + 0.5, fcy + 1,
+                fcx - 3.0, fcy + 1
         );
-        bolt.setFill(Color.web("#ffffff", 0.86));
-        mapPane.getChildren().add(bolt);
+        chargerBolt.setFill(Color.web("#1a1a2e"));
+        mapPane.getChildren().add(chargerBolt);
 
-        Text onlyText = new Text("ELECTRIC VEHICLES ONLY");
-        onlyText.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, Math.max(6, Math.min(9, slotCellH * 0.10))));
-        onlyText.setFill(Color.web("#ffffff", 0.74));
-        onlyText.setX(slotLeftX + slotW * 0.5 - 48);
-        onlyText.setY(slotTopY + slotCellH - 8);
-        mapPane.getChildren().add(onlyText);
+        // Cable coming out of bottom of charger
+        double cableX = bx + bw / 2.0;
+        double cableStartY = by + bh;
+        double cableEndY   = cableStartY + 12;
+        javafx.scene.shape.Line cable = new javafx.scene.shape.Line(cableX, cableStartY, cableX, cableEndY);
+        cable.setStroke(Color.web("#333333"));
+        cable.setStrokeWidth(2.5);
+        cable.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        mapPane.getChildren().add(cable);
+
+        // Plug tip at end of cable
+        Rectangle plug = new Rectangle(cableX - 3.5, cableEndY, 7, 4);
+        plug.setFill(Color.web("#555555"));
+        plug.setArcWidth(2);
+        plug.setArcHeight(2);
+        mapPane.getChildren().add(plug);
+
+        // Two small pin holes on plug
+        Rectangle pin1 = new Rectangle(cableX - 2.5, cableEndY + 1, 2, 2);
+        pin1.setFill(Color.web("#1a1a2e"));
+        Rectangle pin2 = new Rectangle(cableX + 0.5, cableEndY + 1, 2, 2);
+        pin2.setFill(Color.web("#1a1a2e"));
+        mapPane.getChildren().addAll(pin1, pin2);
     }
 
     /** Draws 2 parking meter kiosks with EV backgrounds - one per side, at back of slots. */

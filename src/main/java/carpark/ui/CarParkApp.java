@@ -15,9 +15,11 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -68,9 +70,15 @@ public class CarParkApp extends Application {
     // Parking-lot visuals — deep slate for high contrast
     private static final String C_FLOOR   = "#1E293B";   // slate-900
     private static final String C_LANE    = "#334155";   // slate-800
-    private static final String C_SPACE_E = "#475569";   // slate-600  (empty)
-    private static final String C_SPACE_R = "#D97706";   // amber-600  (reserved / clearing)
-    private static final String C_SPACE_O = "#15803D";   // green-700  (occupied)
+    private static final String C_SPACE_E  = "#475569";   // slate-600  (empty)
+    private static final String C_SPACE_EV = "#16a34a";   // green-600  (EV slot empty)
+    private static final String C_SPACE_R  = "#D97706";   // amber-600  (reserved / clearing)
+    private static final String C_SPACE_O  = "#15803D";   // green-700  (occupied)
+
+    /** Returns the "empty" fill color for a slot — EV slot stays green. */
+    private String emptyColor(int idx) {
+        return idx == 1 ? C_SPACE_EV : C_SPACE_E;
+    }
 
     // Cartoon background palette
     private static final String C_TRUNK   = "#92400E";   // amber-800
@@ -745,7 +753,7 @@ public class CarParkApp extends Application {
             double sy = top ? V_PAD : V_PAD + SH + LANE_H;
 
             Rectangle r = new Rectangle(sx, sy, SW, SH);
-            r.setFill(Color.web(C_SPACE_E));
+            r.setFill(Color.web(emptyColor(i)));
             r.setStroke(Color.web("#FFFFFF", 0.16));
             r.setStrokeWidth(1);
             r.setArcWidth(5); r.setArcHeight(5);
@@ -788,6 +796,48 @@ public class CarParkApp extends Application {
                 handicapText.setOpacity(0.5);
 
                 p.getChildren().addAll(handicapBadge, handicapText);
+            }
+
+            // Reserve slot 2 as an EV charging space.
+            if (i == 1) {
+                double cx = sx + SW / 2.0;
+                double cy = sy + SH / 2.0;
+
+                // "EV" label at top of slot
+                Text evLabel = new Text("EV");
+                evLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+                evLabel.setFill(Color.web("#ffffff", 0.95));
+                evLabel.setX(cx - 10);
+                evLabel.setY(sy + 17);
+                p.getChildren().add(evLabel);
+
+                // White circle around lightning bolt
+                Circle evRing = new Circle(cx, cy, 14);
+                evRing.setFill(Color.TRANSPARENT);
+                evRing.setStroke(Color.web("#ffffff", 0.85));
+                evRing.setStrokeWidth(2.5);
+                p.getChildren().add(evRing);
+
+                // Lightning bolt polygon
+                Polygon bolt = new Polygon(
+                    cx - 4, cy - 9,
+                    cx + 1, cy - 9,
+                    cx - 2, cy - 1,
+                    cx + 5, cy - 1,
+                    cx - 1, cy + 10,
+                    cx + 1, cy + 2,
+                    cx - 4, cy + 2
+                );
+                bolt.setFill(Color.web("#ffffff", 0.92));
+                p.getChildren().add(bolt);
+
+                // "ELECTRIC VEHICLES ONLY" at bottom
+                Text onlyText = new Text("ELECTRIC VEHICLES ONLY");
+                onlyText.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 5.5));
+                onlyText.setFill(Color.web("#ffffff", 0.80));
+                onlyText.setX(sx + 3);
+                onlyText.setY(sy + SH - 6);
+                p.getChildren().add(onlyText);
             }
 
         }
@@ -1085,7 +1135,7 @@ public class CarParkApp extends Application {
 
         if (car == null) {
             if (idx < spaceRects.size()) {
-                spaceRects.get(idx).setFill(Color.web(C_SPACE_E));
+                spaceRects.get(idx).setFill(Color.web(emptyColor(idx)));
             }
             slotParked[idx] = false;
             freeSlots.offer(idx);
@@ -1128,7 +1178,7 @@ public class CarParkApp extends Application {
             lotPane.getChildren().remove(car);
             slotParked[idx] = false;
             if (idx < spaceRects.size()) {
-                spaceRects.get(idx).setFill(Color.web(C_SPACE_E));
+                spaceRects.get(idx).setFill(Color.web(emptyColor(idx)));
             }
             freeSlots.offer(idx);
             if (visualOccupied > 0) {
@@ -1195,7 +1245,7 @@ public class CarParkApp extends Application {
             if (activeAnims[i] != null) { activeAnims[i].stop(); activeAnims[i] = null; }
         }
         if (lotPane != null) lotPane.getChildren().removeIf(n -> n instanceof Group);
-        spaceRects.forEach(r -> r.setFill(Color.web(C_SPACE_E)));
+        for (int i = 0; i < spaceRects.size(); i++) { spaceRects.get(i).setFill(Color.web(emptyColor(i))); }
         Arrays.fill(parkedCars, null);
         Arrays.fill(slotParked, false);
         freeSlots.clear(); takenSlots.clear();
