@@ -1,0 +1,117 @@
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Car Park Simulation â€“ Dark Parking-Lot Theme
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+
+.root {
+    -fx-font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+    -fx-background-color: #1a1f30;
+}
+
+.parking-lot-shell {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 100% 100%, #243047 0%, #192233 45%, #121a27 100%),
+        linear-gradient(from 0% 0% to 0% 100%, #627084 0%, #374152 100%);
+    -fx-background-insets: 0, 10;
+    -fx-background-radius: 28, 20;
+    -fx-border-color: #6f7f9466;
+    -fx-border-width: 1;
+    -fx-border-radius: 28;
+    -fx-effect: dropshadow(gaussian, #00000066, 24, 0.24, 0, 14);
+}
+
+/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.sim-btn {
+    -fx-padding: 8 18;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, #00000044, 4, 0, 0, 2);
+}
+
+.btn-green {
+    -fx-background-color: #172d20;
+    -fx-border-color: #4caf7d;
+    -fx-text-fill: #4caf7d;
+}
+.btn-green:hover {
+    -fx-background-color: #1f3d2c;
+    -fx-effect: dropshadow(gaussian, #4caf7d66, 12, 0, 0, 0);
+}
+.btn-green:disabled { -fx-opacity: 0.35; }
+
+.btn-red {
+    -fx-background-color: #2d1515;
+    -fx-border-color: #f87171;
+    -fx-text-fill: #f87171;
+}
+.btn-red:hover {
+    -fx-background-color: #3d1c1c;
+    -fx-effect: dropshadow(gaussian, #f8717166, 12, 0, 0, 0);
+}
+.btn-red:disabled { -fx-opacity: 0.35; }
+
+.btn-gray {
+    -fx-background-color: #1a2035;
+    -fx-border-color: #3d4f6e;
+    -fx-text-fill: #94a3b8;
+}
+.btn-gray:hover { -fx-background-color: #1f2840; }
+
+/* â”€â”€ Status Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.badge-running {
+    -fx-background-color: #172d20;
+    -fx-border-color: #4caf7d;
+    -fx-border-width: 1;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-padding: 3 12;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4caf7d;
+    -fx-effect: dropshadow(gaussian, #4caf7d55, 10, 0, 0, 0);
+}
+
+.badge-stopped {
+    -fx-background-color: #1c1f2e;
+    -fx-border-color: #3d4f6e;
+    -fx-border-width: 1;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-padding: 3 12;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #475569;
+}
+
+/* â”€â”€ Sliders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.sim-slider .track {
+    -fx-background-color: #1e2538;
+    -fx-background-radius: 4;
+    -fx-pref-height: 5;
+}
+
+.sim-slider .thumb {
+    -fx-background-color: #4f9eff;
+    -fx-background-radius: 50%;
+    -fx-pref-width: 15;
+    -fx-pref-height: 15;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #4f9eff55, 6, 0, 0, 0);
+}
+
+.sim-slider .thumb:hover {
+    -fx-background-color: #7ab8ff;
+    -fx-effect: dropshadow(gaussian, #4f9eff99, 12, 0, 0, 0);
+}
+
+.sim-slider:focused .thumb {
+    -fx-background-color: #7ab8ff;
+}
+
+/* â”€â”€ Scroll Bars â€“ hidden â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.scroll-bar               { -fx-opacity: 0; }
+.scroll-bar:vertical      { -fx-pref-width: 0; }
+.scroll-bar:horizontal    { -fx-pref-height: 0; }
