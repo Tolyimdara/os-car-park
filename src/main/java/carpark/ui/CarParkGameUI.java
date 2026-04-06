@@ -26,6 +26,9 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Path;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.QuadCurveTo;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -447,12 +450,14 @@ public class CarParkGameUI extends Application {
         drawMapLane();            // center driving lane (slightly lighter shade)
         drawMapCanopies();        // roof/awning structures at top of each parking section
         drawMapBottomApproach();  // gray curb band at bottom (exit side)
+        drawParkingMeterKiosks(); // parking meter stations at back of lots
         drawMapTrees();           // decorative tree islands
         drawMapLaneBoundaries();  // white vertical lines at lane edges
         drawMapSlotLines();       // horizontal dividers between parking bays
+        drawHandicapSlotSign();   // reserved handicap marker on slot 1
         drawMapLaneMarkings();    // dashed center line
         drawMapGates();           // IN (top) and OUT (bottom) barrier gates
-        drawMapParkingSign();     // blue P sign in lane center
+        drawEntryParkingSign();   // pole-mounted P sign before the IN gate
     }
 
     /** Green grass border surrounding the parking lot with a yellow curb stripe. */
@@ -697,6 +702,205 @@ public class CarParkGameUI extends Application {
         mapPane.getChildren().add(line);
     }
 
+    /** Marks slot 1 as a handicap space on the left parking side. */
+    private void drawHandicapSlotSign() {
+        int leftCount = leftSideSlotCount();
+        if (leftCount <= 0) return;
+
+        double slotY = slotRowCenterY(0, leftCount);
+        double slotCellH = (MAP_SLOT_BOTTOM - MAP_SLOT_TOP) / leftCount;
+        double badgeW = 52;
+        double badgeH = Math.min(40, slotCellH * 0.65);
+        double badgeX = MAP_LEFT_SLOT_X - badgeW / 2.0;
+        double badgeY = slotY - badgeH / 2.0;
+
+        Rectangle badge = new Rectangle(badgeX, badgeY, badgeW, badgeH);
+        badge.setFill(Color.web("#1d4ed8", 0.85));
+        badge.setStroke(Color.web("#ffffff", 0.9));
+        badge.setStrokeWidth(2.0);
+        badge.setArcWidth(8);
+        badge.setArcHeight(8);
+        badge.setOpacity(0.5);
+        mapPane.getChildren().add(badge);
+
+        Label handicap = new Label("♿");
+        handicap.setFont(Font.font("Segoe UI Symbol", FontWeight.BOLD, 24));
+        handicap.setTextFill(Color.WHITE);
+        handicap.setAlignment(Pos.CENTER);
+        handicap.setPrefSize(badgeW, badgeH);
+        handicap.setLayoutX(badgeX);
+        handicap.setLayoutY(badgeY - 2);
+        handicap.setOpacity(0.5);
+        mapPane.getChildren().add(handicap);
+    }
+
+    /** Paints slot 2 as an EV charging bay with white lane markings/text. */
+    private void drawEVSlotBackground() {
+        int leftCount = leftSideSlotCount();
+        if (leftCount <= 1) return;
+
+        double slotY = slotRowCenterY(1, leftCount);  // Slot 2 is index 1 (0-based)
+        double slotCellH = (MAP_SLOT_BOTTOM - MAP_SLOT_TOP) / leftCount;
+        double slotW = MAP_LANE_LEFT_X - MAP_PARK_LEFT_X;
+        double slotTopY = slotY - slotCellH / 2.0;
+        double slotLeftX = MAP_PARK_LEFT_X;
+
+        Rectangle evBase = new Rectangle(slotLeftX, slotTopY, slotW, slotCellH);
+        evBase.setFill(Color.web("#64d147", 0.78));
+        mapPane.getChildren().add(evBase);
+
+        Rectangle topBar = new Rectangle(slotLeftX + 22, slotTopY + 7, slotW - 44, 5);
+        topBar.setFill(Color.web("#2a2f34", 0.95));
+        topBar.setArcWidth(3);
+        topBar.setArcHeight(3);
+        mapPane.getChildren().add(topBar);
+
+        Text evText = new Text("EV");
+        evText.setFont(Font.font("Segoe UI", FontWeight.BOLD, Math.max(18, Math.min(34, slotCellH * 0.34))));
+        evText.setFill(Color.web("#ffffff", 0.90));
+        evText.setX(slotLeftX + slotW * 0.5 - 18);
+        evText.setY(slotTopY + slotCellH * 0.52);
+        mapPane.getChildren().add(evText);
+
+        Text charging = new Text("CHARGING");
+        charging.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, Math.max(7, Math.min(11, slotCellH * 0.12))));
+        charging.setFill(Color.web("#ffffff", 0.78));
+        charging.setX(slotLeftX + slotW * 0.5 - 28);
+        charging.setY(slotTopY + slotCellH * 0.60);
+        mapPane.getChildren().add(charging);
+
+        double ringR = Math.max(10, Math.min(18, slotCellH * 0.17));
+        double ringCx = slotLeftX + slotW * 0.5;
+        double ringCy = slotTopY + slotCellH * 0.72;
+        Circle ring = new Circle(ringCx, ringCy, ringR);
+        ring.setFill(Color.TRANSPARENT);
+        ring.setStroke(Color.web("#ffffff", 0.72));
+        ring.setStrokeWidth(3);
+        mapPane.getChildren().add(ring);
+
+        Polygon bolt = new Polygon(
+                ringCx - 4, ringCy - 6,
+                ringCx + 1, ringCy - 6,
+                ringCx - 2, ringCy,
+                ringCx + 4, ringCy,
+                ringCx - 1, ringCy + 8,
+                ringCx + 1, ringCy + 2,
+                ringCx - 4, ringCy + 2
+        );
+        bolt.setFill(Color.web("#ffffff", 0.86));
+        mapPane.getChildren().add(bolt);
+
+        Text onlyText = new Text("ELECTRIC VEHICLES ONLY");
+        onlyText.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, Math.max(6, Math.min(9, slotCellH * 0.10))));
+        onlyText.setFill(Color.web("#ffffff", 0.74));
+        onlyText.setX(slotLeftX + slotW * 0.5 - 48);
+        onlyText.setY(slotTopY + slotCellH - 8);
+        mapPane.getChildren().add(onlyText);
+    }
+
+    /** Draws 2 parking meter kiosks with EV backgrounds - one per side, at back of slots. */
+    private void drawParkingMeterKiosks() {
+        int leftCount = leftSideSlotCount();
+        int rightCount = rightSideSlotCount();
+
+        if (leftCount > 0) {
+            // Left side: meter at back of slots, middle position
+            double leftMeterY = MAP_SLOT_BOTTOM - 12;
+            drawMeterKiosk(MAP_LEFT_SLOT_X, leftMeterY);
+        }
+
+        if (rightCount > 0) {
+            // Right side: meter at back of slots, middle position
+            double rightMeterY = MAP_SLOT_BOTTOM - 12;
+            drawMeterKiosk(MAP_RIGHT_SLOT_X, rightMeterY);
+        }
+    }
+
+    /** Draws a single parking meter kiosk at the given position. */
+    private void drawMeterKiosk(double x, double y) {
+        // Post/pole
+        Rectangle post = new Rectangle(x - 3, y, 6, 26);
+        post.setFill(Color.web("#2d2d2d"));
+        mapPane.getChildren().add(post);
+
+        // Base
+        Rectangle base = new Rectangle(x - 8, y + 26, 16, 4);
+        base.setFill(Color.web("#1a1a1a"));
+        mapPane.getChildren().add(base);
+
+        // Main kiosk body
+        Rectangle body = new Rectangle(x - 11, y, 22, 24);
+        body.setFill(Color.web("#4a5568"));
+        body.setArcWidth(3);
+        body.setArcHeight(3);
+        mapPane.getChildren().add(body);
+
+        // Screen/display
+        Rectangle screen = new Rectangle(x - 9, y + 2, 18, 10);
+        screen.setFill(Color.web("#e0e7ff"));
+        screen.setArcWidth(2);
+        screen.setArcHeight(2);
+        mapPane.getChildren().add(screen);
+
+        // Button area
+        Rectangle buttons = new Rectangle(x - 9, y + 13, 18, 8);
+        buttons.setFill(Color.web("#6b7280"));
+        mapPane.getChildren().add(buttons);
+
+        // Small button dots
+        Circle btn1 = new Circle(x - 4, y + 16, 1.5);
+        btn1.setFill(Color.web("#fbbf24"));
+        Circle btn2 = new Circle(x + 1, y + 16, 1.5);
+        btn2.setFill(Color.web("#fbbf24"));
+        Circle btn3 = new Circle(x - 4, y + 19, 1.5);
+        btn3.setFill(Color.web("#fbbf24"));
+        Circle btn4 = new Circle(x + 1, y + 19, 1.5);
+        btn4.setFill(Color.web("#fbbf24"));
+        mapPane.getChildren().addAll(btn1, btn2, btn3, btn4);
+    }
+
+    /** Draws a compact wall charger at the back edge of slot 2. */
+    private void drawEVStationIcon() {
+        int leftCount = leftSideSlotCount();
+        if (leftCount <= 1) return;
+
+        double slotY = slotRowCenterY(1, leftCount);  // Slot 2 is index 1
+        double slotCellH = (MAP_SLOT_BOTTOM - MAP_SLOT_TOP) / leftCount;
+        double slotTopY = slotY - slotCellH / 2.0;
+        double slotLeftX = MAP_PARK_LEFT_X;
+        double slotW = MAP_LANE_LEFT_X - MAP_PARK_LEFT_X;
+        double boxW = 20;
+        double boxH = 14;
+        double chargerX = slotLeftX + slotW * 0.22;
+        double boxX = chargerX - boxW / 2.0;
+        double boxY = slotTopY + 4;
+
+        Rectangle charger = new Rectangle(boxX, boxY, boxW, boxH);
+        charger.setFill(Color.web("#dce4ea"));
+        charger.setStroke(Color.web("#9da8b2"));
+        charger.setStrokeWidth(1.0);
+        charger.setArcWidth(3);
+        charger.setArcHeight(3);
+        mapPane.getChildren().add(charger);
+
+        Rectangle dock = new Rectangle(chargerX - 3, boxY + boxH - 1, 6, 4);
+        dock.setFill(Color.web("#2a2f34"));
+        mapPane.getChildren().add(dock);
+
+        Path cable = new Path();
+        cable.setStroke(Color.web("#1f2937"));
+        cable.setStrokeWidth(2.0);
+        cable.setFill(null);
+        cable.getElements().add(new MoveTo(chargerX, boxY + boxH + 2));
+        cable.getElements().add(new QuadCurveTo(chargerX + 8, boxY + boxH + 8, chargerX + 15, boxY + boxH + 4));
+        mapPane.getChildren().add(cable);
+
+        Circle plug = new Circle(chargerX + 15, boxY + boxH + 4, 2.4);
+        plug.setFill(Color.web("#fbbf24"));
+        mapPane.getChildren().add(plug);
+    }
+
+
     /** Dashed center line and edge lines for the driving lane. */
     private void drawMapLaneMarkings() {
         double cx  = CENTER_LANE_X;
@@ -814,26 +1018,44 @@ public class CarParkGameUI extends Application {
         t.play();
     }
 
-    /** Blue "P" parking sign in the centre of the driving lane. */
-    private void drawMapParkingSign() {
-        double cx = CENTER_LANE_X;
-        double cy = (MAP_PARK_TOP_Y + MAP_PARK_BOT_Y) / 2.0;
-        double sw = 76, sh = 76;
-        Rectangle border = new Rectangle(cx - sw / 2 - 5, cy - sh / 2 - 5, sw + 10, sh + 10);
-        border.setFill(Color.WHITE);
-        border.setOpacity(0.5);
-        border.setArcWidth(16); border.setArcHeight(16);
+    /** Pole-mounted parking sign near the entry side, before the IN gate. */
+    private void drawEntryParkingSign() {
+        double signW = 42;
+        double signH = 42;
+        double signX = MAP_LANE_LEFT_X - signW - 38;
+        double signY = GATE_TOP_Y - signH - 18;
+
+        Circle shadow = new Circle(signX + signW / 2.0 + 2, signY + signH + 54, 11);
+        shadow.setFill(Color.web("#00000033"));
+        mapPane.getChildren().add(shadow);
+
+        Rectangle post = new Rectangle(signX + signW / 2.0 - 4, signY + signH, 8, 54);
+        post.setFill(Color.web("#3ea5c0"));
+        mapPane.getChildren().add(post);
+
+        Rectangle base = new Rectangle(signX + signW / 2.0 - 11, signY + signH + 52, 22, 10);
+        base.setFill(Color.web("#9f6a2f"));
+        base.setArcWidth(3);
+        base.setArcHeight(3);
+        mapPane.getChildren().add(base);
+
+        Rectangle border = new Rectangle(signX - 2, signY - 2, signW + 4, signH + 4);
+        border.setFill(Color.web("#ffffff"));
+        border.setArcWidth(8);
+        border.setArcHeight(8);
         mapPane.getChildren().add(border);
-        Rectangle bg = new Rectangle(cx - sw / 2, cy - sh / 2, sw, sh);
-        bg.setFill(Color.web("#1565c0"));
-        bg.setOpacity(0.5);
-        bg.setArcWidth(10); bg.setArcHeight(10);
-        mapPane.getChildren().add(bg);
+
+        Rectangle face = new Rectangle(signX, signY, signW, signH);
+        face.setFill(Color.web("#2f8fd6"));
+        face.setArcWidth(7);
+        face.setArcHeight(7);
+        mapPane.getChildren().add(face);
+
         Text pText = new Text("P");
-        pText.setFont(Font.font("Arial", FontWeight.BOLD, 52));
-        pText.setFill(Color.WHITE);
-        pText.setOpacity(0.5);
-        pText.setX(cx - 17); pText.setY(cy + 19);
+        pText.setFont(Font.font("Arial", FontWeight.BOLD, 30));
+        pText.setFill(Color.web("#f4fbff"));
+        pText.setX(signX + 11);
+        pText.setY(signY + 31);
         mapPane.getChildren().add(pText);
     }
 

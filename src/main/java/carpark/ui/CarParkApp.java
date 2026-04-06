@@ -737,6 +737,7 @@ public class CarParkApp extends Application {
 
     /** Draws parking-space rectangles + number labels. Populates spaceRects. */
     private void drawParkingSpaces(Pane p) {
+        drawMeterKiosksApp(p);
         spaceRects.clear();
         for (int i = 0; i < capacity; i++) {
             boolean top = isTopSlot(i);
@@ -761,7 +762,67 @@ public class CarParkApp extends Application {
             num.setLayoutX(sx + SW / 2.0 - (i + 1 >= 10 ? 6 : 4));
             num.setLayoutY(top ? sy + SH - 17 : sy + 4);
             p.getChildren().add(num);
+
+            // Reserve slot 1 as a handicap space with a centered wheelchair marker.
+            if (i == 0) {
+                double badgeW = 42;
+                double badgeH = 32;
+                double badgeX = sx + (SW - badgeW) / 2.0;
+                double badgeY = sy + (SH - badgeH) / 2.0;
+
+                Rectangle handicapBadge = new Rectangle(badgeX, badgeY, badgeW, badgeH);
+                handicapBadge.setFill(Color.web("#1d4ed8", 0.85));
+                handicapBadge.setStroke(Color.web("#FFFFFF", 0.85));
+                handicapBadge.setStrokeWidth(1.8);
+                handicapBadge.setArcWidth(7);
+                handicapBadge.setArcHeight(7);
+                handicapBadge.setOpacity(0.5);
+
+                Label handicapText = new Label("♿");
+                handicapText.setFont(Font.font("Segoe UI Symbol", FontWeight.BOLD, 21));
+                handicapText.setTextFill(Color.WHITE);
+                handicapText.setAlignment(Pos.CENTER);
+                handicapText.setPrefSize(badgeW, badgeH);
+                handicapText.setLayoutX(badgeX);
+                handicapText.setLayoutY(badgeY - 1);
+                handicapText.setOpacity(0.5);
+
+                p.getChildren().addAll(handicapBadge, handicapText);
+            }
+
         }
+    }
+
+    /** Draws 2 parking meter kiosks with EV backgrounds - one per side, at back of slots. */
+    private void drawMeterKiosksApp(Pane p) {
+        // Left side meter (top row) at back of slots
+        double leftX = H_PAD + (topRowCount() - 1) * (SW + GAP) / 2.0;
+        double leftY = V_PAD + SH - 8;
+        drawMeterKioskApp(p, leftX, leftY);
+
+        // Right side meter (bottom row) at back of slots
+        double rightX = H_PAD + (bottomRowCount() - 1) * (SW + GAP) / 2.0;
+        double rightY = V_PAD + SH + LANE_H + SH - 8;
+        drawMeterKioskApp(p, rightX, rightY);
+    }
+
+    /** Draws a single parking meter for CarParkApp. */
+    private void drawMeterKioskApp(Pane p, double x, double y) {
+        Rectangle post = new Rectangle(x - 2, y, 4, 14);
+        post.setFill(Color.web("#2d2d2d"));
+        Rectangle base = new Rectangle(x - 5, y + 14, 10, 2);
+        base.setFill(Color.web("#1a1a1a"));
+        Rectangle body = new Rectangle(x - 7, y, 14, 14);
+        body.setFill(Color.web("#4a5568"));
+        body.setArcWidth(2);
+        body.setArcHeight(2);
+        Rectangle screen = new Rectangle(x - 6, y + 1, 12, 6);
+        screen.setFill(Color.web("#e0e7ff"));
+        screen.setArcWidth(1);
+        screen.setArcHeight(1);
+        Rectangle buttons = new Rectangle(x - 6, y + 8, 12, 4);
+        buttons.setFill(Color.web("#6b7280"));
+        p.getChildren().addAll(post, base, body, screen, buttons);
     }
     // -----------------------------------------------------------------------------
     // Controls card
